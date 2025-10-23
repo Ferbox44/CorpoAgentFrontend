@@ -1,0 +1,107 @@
+<div class="login-container">
+  <div class="login-card">
+    <div class="login-header">
+      <h1 class="login-title">Welcome Back</h1>
+      <p class="login-subtitle">Sign in to your CorpoAgent account</p>
+    </div>
+
+    <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" class="login-form">
+      <!-- Email Field -->
+      <div class="form-group">
+        <label for="email" class="form-label">
+          <i class="pi pi-envelope"></i>
+          Email Address
+        </label>
+        <input
+          id="email"
+          type="email"
+          pInputText
+          formControlName="email"
+          placeholder="Enter your email"
+          [class.ng-invalid]="loginForm.get('email')?.invalid && loginForm.get('email')?.touched"
+          class="form-input"
+        />
+        @if (loginForm.get('email')?.invalid && loginForm.get('email')?.touched) {
+          <div class="error-message">
+            @if (loginForm.get('email')?.errors?.['required']) {
+              <i class="pi pi-exclamation-triangle"></i>
+              Email is required
+            }
+            @if (loginForm.get('email')?.errors?.['email']) {
+              <i class="pi pi-exclamation-triangle"></i>
+              Please enter a valid email
+            }
+          </div>
+        }
+      </div>
+
+      <!-- Password Field -->
+      <div class="form-group">
+        <label for="password" class="form-label">
+          <i class="pi pi-lock"></i>
+          Password
+        </label>
+        <p-password
+          id="password"
+          formControlName="password"
+          placeholder="Enter your password"
+          [feedback]="false"
+          [toggleMask]="true"
+          [class.ng-invalid]="loginForm.get('password')?.invalid && loginForm.get('password')?.touched"
+          styleClass="form-input"
+        />
+        @if (loginForm.get('password')?.invalid && loginForm.get('password')?.touched) {
+          <div class="error-message">
+            @if (loginForm.get('password')?.errors?.['required']) {
+              <i class="pi pi-exclamation-triangle"></i>
+              Password is required
+            }
+            @if (loginForm.get('password')?.errors?.['minlength']) {
+              <i class="pi pi-exclamation-triangle"></i>
+              Password must be at least 6 characters
+            }
+          </div>
+        }
+      </div>
+
+      <!-- Error Message -->
+      @if (authService.error()) {
+        <div class="error-banner">
+          <i class="pi pi-exclamation-circle"></i>
+          <span>{{ authService.error() }}</span>
+        </div>
+      }
+
+      <!-- Submit Button -->
+      <button
+        type="submit"
+        pButton
+        [loading]="authService.isLoading()"
+        [disabled]="loginForm.invalid || authService.isLoading()"
+        class="login-button"
+        label="Sign In"
+      >
+        @if (!authService.isLoading()) {
+          <i class="pi pi-sign-in"></i>
+          
+        }
+      </button>
+
+      <!-- Loading Spinner -->
+      @if (authService.isLoading()) {
+        <div class="loading-container">
+          <p-progressSpinner [style]="{ width: '24px', height: '24px' }" />
+          <span>Signing you in...</span>
+        </div>
+      }
+    </form>
+
+    <!-- Footer -->
+    <div class="login-footer">
+      <p class="footer-text">
+        <i class="pi pi-shield"></i>
+        AI agent demo
+      </p>
+    </div>
+  </div>
+</div>
