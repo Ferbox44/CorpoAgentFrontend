@@ -29,6 +29,7 @@ import { LoginRequest } from '../../../core/models/auth.models';
 })
 export class LoginFormComponent {
   loginForm: FormGroup;
+  showPassword = false;
 
   constructor(
     private fb: FormBuilder,
@@ -39,6 +40,10 @@ export class LoginFormComponent {
       email: ['', [Validators.required, Validators.email]],
       password: ['', [Validators.required, Validators.minLength(6)]]
     });
+  }
+
+  togglePasswordVisibility(): void {
+    this.showPassword = !this.showPassword;
   }
 
   onSubmit(): void {

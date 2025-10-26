@@ -18,17 +18,17 @@
             />
             <div class="user-details">
               <span class="user-name">
-                {{ authService.user()?.firstName }} {{ authService.user()?.lastName }}
+                {{ authService.user?.name }}
               </span>
-              <span class="user-email">{{ authService.user()?.email }}</span>
+              <span class="user-email">{{ authService.user?.email }}</span>
             </div>
           </div>
           <p-button 
-            icon="pi pi-sign-out" 
+            icon="pi pi-sign-out"
             severity="secondary"
             class="logout-button"
             (onClick)="logout()"
-            label="Logout"
+            
           />
         </div>
       </div>
@@ -43,30 +43,20 @@
         <div class="welcome-card">
           <div class="welcome-content">
             <h2 class="welcome-title">
-              Welcome back, {{ authService.user()?.firstName }}!
+              Welcome back, {{ authService.user?.name }}!
             </h2>
             <p class="welcome-subtitle">
               Your intelligent corporate assistant is ready to help you with data analysis, 
               reporting, and business insights.
             </p>
-            <div class="welcome-actions">
-              <p-button 
-                label="Start New Chat" 
-                icon="pi pi-comments" 
-                severity="primary"
-                class="action-button primary"
-                (onClick)="startNewChat()"
-              />
-              <p-button 
-                label="View Reports" 
-                icon="pi pi-chart-bar" 
-                severity="secondary"
-                class="action-button secondary"
-                (onClick)="viewReports()"
-              />
-            </div>
+            
           </div>
         </div>
+      </div>
+
+      <!-- Chat Section -->
+      <div class="chat-section">
+        <app-chat-container></app-chat-container>
       </div>
 
       <!-- Dashboard Grid -->
@@ -76,69 +66,52 @@
           <div class="card-header">
             <i class="pi pi-bolt"></i>
             <h3>Quick Actions</h3>
+            <h3>Click on the button to perform the action</h3>
           </div>
           <div class="card-content">
             <div class="action-list">
               <p-button 
-                label="Data Analysis" 
+                label="Data Analysis: Analyze data and provide insights and recommendations. Stores the data in the database." 
                 icon="pi pi-database" 
                 severity="info"
                 class="quick-action"
                 (onClick)="openDataAnalysis()"
               />
               <p-button 
-                label="Generate Report" 
+                label="Generate Report: Generate reports from data and provide insights and recommendations" 
                 icon="pi pi-file-pdf" 
                 severity="warn"
                 class="quick-action"
                 (onClick)="generateReport()"
               />
-              <p-button 
-                label="Agent Orchestration" 
-                icon="pi pi-cog" 
-                severity="help"
-                class="quick-action"
-                (onClick)="openOrchestration()"
-              />
+              
             </div>
           </div>
         </div>
 
-        <!-- Recent Activity -->
+        <!-- CSV Files Preview -->
         <div class="dashboard-card">
           <div class="card-header">
-            <i class="pi pi-clock"></i>
-            <h3>Recent Activity</h3>
+            <i class="pi pi-file"></i>
+            <h3>Example CSV Files</h3>
           </div>
           <div class="card-content">
-            <div class="activity-list">
-              <div class="activity-item">
-                <div class="activity-icon">
-                  <i class="pi pi-comments"></i>
-                </div>
-                <div class="activity-content">
-                  <p class="activity-title">New chat session started</p>
-                  <p class="activity-time">2 hours ago</p>
-                </div>
-              </div>
-              <div class="activity-item">
-                <div class="activity-icon">
-                  <i class="pi pi-chart-bar"></i>
-                </div>
-                <div class="activity-content">
-                  <p class="activity-title">Report generated</p>
-                  <p class="activity-time">1 day ago</p>
-                </div>
-              </div>
-              <div class="activity-item">
-                <div class="activity-icon">
-                  <i class="pi pi-database"></i>
-                </div>
-                <div class="activity-content">
-                  <p class="activity-title">Data analysis completed</p>
-                  <p class="activity-time">3 days ago</p>
-                </div>
-              </div>
+            <div class="csv-preview-section">
+              <p class="csv-description">Click the buttons below to preview example CSV files that can be used for data analysis.</p>
+              <p-button 
+                label="Preview Employees CSV" 
+                icon="pi pi-eye" 
+                severity="info"
+                class="csv-preview-button"
+                (onClick)="showCsvPreview()"
+              />
+              <p-button 
+                label="Preview Corporate Data CSV" 
+                icon="pi pi-file" 
+                severity="success"
+                class="csv-preview-button"
+                (onClick)="showCorporateDataPreview()"
+              />
             </div>
           </div>
         </div>
@@ -147,14 +120,14 @@
         <div class="dashboard-card">
           <div class="card-header">
             <i class="pi pi-shield"></i>
-            <h3>System Status</h3>
+            <h3>System Specifications</h3>
           </div>
           <div class="card-content">
             <div class="status-list">
               <div class="status-item">
                 <div class="status-info">
                   <i class="pi pi-database"></i>
-                  <span>Data Agent</span>
+                  <span>Data Analysis</span>
                 </div>
                 <div class="status-indicator online">
                   <i class="pi pi-check-circle"></i>
@@ -164,7 +137,7 @@
               <div class="status-item">
                 <div class="status-info">
                   <i class="pi pi-file-pdf"></i>
-                  <span>Report Agent</span>
+                  <span>Report Generation</span>
                 </div>
                 <div class="status-indicator online">
                   <i class="pi pi-check-circle"></i>
@@ -174,7 +147,7 @@
               <div class="status-item">
                 <div class="status-info">
                   <i class="pi pi-cog"></i>
-                  <span>Orchestrator</span>
+                  <span>Agent Orchestration</span>
                 </div>
                 <div class="status-indicator online">
                   <i class="pi pi-check-circle"></i>
@@ -183,8 +156,8 @@
               </div>
               <div class="status-item">
                 <div class="status-info">
-                  <i class="pi pi-robot"></i>
-                  <span>Uni Agent</span>
+                  <i class="pi pi-wrench"></i>
+                  <span>Unified Agent</span>
                 </div>
                 <div class="status-indicator online">
                   <i class="pi pi-check-circle"></i>

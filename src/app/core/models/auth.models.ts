@@ -11,19 +11,16 @@ export interface RegisterRequest {
 }
 
 export interface AuthResponse {
-  accessToken: string;
-  refreshToken: string;
+  access_token: string;
   user: User;
 }
 
 export interface User {
   id: string;
   email: string;
-  firstName: string;
-  lastName: string;
+  name: string;
   role: string;
-  createdAt: string;
-  updatedAt: string;
+  department: string;
 }
 
 export interface AuthState {

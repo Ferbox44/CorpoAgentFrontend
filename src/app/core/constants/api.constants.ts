@@ -9,7 +9,9 @@ export const API_ENDPOINTS = {
   CHAT: {
     SESSIONS: '/chat/sessions',
     MESSAGES: '/chat/messages',
-    SEND: '/chat/send'
+    SEND: '/chat/send',
+    SEND_FILE: '/chat/send-file'
+    
   },
   AGENTS: {
     DATA: '/agents/data',

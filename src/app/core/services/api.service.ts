@@ -41,7 +41,7 @@ export class ApiService {
   }
 
   createChatSession(): Observable<ChatSession> {
-    return this.http.post<ChatSession>(`${API_BASE_URL}${API_ENDPOINTS.CHAT.SESSIONS}`, {});
+    return this.http.get<ChatSession>(`${API_BASE_URL}${API_ENDPOINTS.CHAT.SESSIONS}`, {});
   }
 
   getChatMessages(sessionId: string): Observable<ChatMessage[]> {

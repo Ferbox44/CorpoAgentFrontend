@@ -1,179 +1,146 @@
-import { Injectable, signal, computed } from '@angular/core';
+import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, BehaviorSubject, tap, catchError, throwError } from 'rxjs';
+import { Observable, tap, catchError, throwError } from 'rxjs';
 import { API_ENDPOINTS, API_BASE_URL } from '../constants/api.constants';
-import { LoginRequest, RegisterRequest, AuthResponse, User, AuthState } from '../models/auth.models';
-import { Router } from '@angular/router';
+import { LoginRequest, RegisterRequest, AuthResponse, User } from '../models/auth.models';
 
 @Injectable({
   providedIn: 'root'
 })
 export class AuthService {
-  private readonly AUTH_STORAGE_KEY = 'corpo_agent_auth';
   private readonly TOKEN_STORAGE_KEY = 'corpo_agent_token';
-  // Signals for reactive state management
-  private authState = signal<AuthState>({
-    isAuthenticated: false,
-    user: null,
-    accessToken: null,
-    refreshToken: null,
-    isLoading: false,
-    error: null
-  });
+  
+  // Simple properties
+  public isAuthenticated = false;
+  public user: User | null = null;
+  public isLoading = false;
+  public error: string | null = null;
 
-  // Public readonly signals
-  public readonly isAuthenticated = computed(() => this.authState().isAuthenticated);
-  public readonly user = computed(() => this.authState().user);
-  public readonly isLoading = computed(() => this.authState().isLoading);
-  public readonly error = computed(() => this.authState().error);
-
-  constructor(private http: HttpClient, private router: Router) {
-    this.initializeAuth();
+  constructor(private http: HttpClient) {
+    this.checkAuthStatus();
   }
 
-  private initializeAuth(): void {
-    const storedAuth = this.getStoredAuth();
-    if (storedAuth) {
-      this.authState.set({
-        isAuthenticated: storedAuth.isAuthenticated ?? false,
-        user: storedAuth.user ?? null,
-        accessToken: storedAuth.accessToken ?? null,
-        refreshToken: storedAuth.refreshToken ?? null,
-        isLoading: false,
-        error: null
-      });
+  private checkAuthStatus(): void {
+    const token = this.getStoredToken();
+    if (token && !this.isTokenExpired(token)) {
+      this.isAuthenticated = true;
+      this.loadUserProfile();
     }
   }
 
-  private getStoredAuth(): Partial<AuthState> | null {
+  private getStoredToken(): string | null {
     try {
-      const stored = localStorage.getItem(this.AUTH_STORAGE_KEY);
-      return stored ? JSON.parse(stored) : null;
+      return localStorage.getItem(this.TOKEN_STORAGE_KEY);
     } catch {
       return null;
     }
   }
 
-  private storeAuth(authData: Partial<AuthState>): void {
+  private storeToken(token: string): void {
     try {
-      localStorage.setItem(this.AUTH_STORAGE_KEY, JSON.stringify(authData));
+      localStorage.setItem(this.TOKEN_STORAGE_KEY, token);
     } catch (error) {
-      console.error('Failed to store auth data:', error);
+      console.error('Failed to store token:', error);
     }
   }
 
-  private clearStoredAuth(): void {
-    localStorage.removeItem(this.AUTH_STORAGE_KEY);
+  private clearStoredToken(): void {
     localStorage.removeItem(this.TOKEN_STORAGE_KEY);
   }
 
-  login(credentials: LoginRequest): Observable<AuthResponse> {
-    this.authState.update(state => ({ ...state, isLoading: true, error: null }));
+  private loadUserProfile(): void {
+    this.http.get<User>(`${API_BASE_URL}${API_ENDPOINTS.AUTH.PROFILE}`).subscribe({
+      next: (user) => {
+        this.user = user;
+      },
+      error: (error) => {
+        console.error('Failed to load user profile:', error);
+        this.logout();
+      }
+    });
+  }
 
+  login(credentials: LoginRequest): Observable<AuthResponse> {
+    this.isLoading = true;
+    this.error = null;
     return this.http.post<AuthResponse>(`${API_BASE_URL}${API_ENDPOINTS.AUTH.LOGIN}`, credentials)
       .pipe(
         tap(response => {
-          const newState: AuthState = {
-            isAuthenticated: true,
-            user: response.user,
-            accessToken: response.accessToken,
-            refreshToken: response.refreshToken,
-            isLoading: false,
-            error: null
-          };
-          this.authState.set(newState);
-          this.storeAuth(newState);
+          // Backend returns 'access_token'
+          this.storeToken(response.access_token);
+          console.log('Storing token:', response.access_token);
+          
+          this.isAuthenticated = true;
+          this.user = response.user;
+          this.isLoading = false;
         }),
         catchError(error => {
-          this.authState.update(state => ({
-            ...state,
-            isLoading: false,
-            error: error.error?.message || 'Login failed'
-          }));
+          this.error = error.error?.message || 'Login failed';
+          this.isLoading = false;
           return throwError(() => error);
         })
       );
   }
 
   register(userData: RegisterRequest): Observable<AuthResponse> {
-    this.authState.update(state => ({ ...state, isLoading: true, error: null }));
+    this.isLoading = true;
+    this.error = null;
 
     return this.http.post<AuthResponse>(`${API_BASE_URL}${API_ENDPOINTS.AUTH.REGISTER}`, userData)
       .pipe(
         tap(response => {
-          const newState: AuthState = {
-            isAuthenticated: true,
-            user: response.user,
-            accessToken: response.accessToken,
-            refreshToken: response.refreshToken,
-            isLoading: false,
-            error: null
-          };
-          this.authState.set(newState);
-          this.storeAuth(newState);
+          // Backend returns 'access_token'
+          this.storeToken(response.access_token);
+          this.isAuthenticated = true;
+          this.user = response.user;
+          this.isLoading = false;
         }),
         catchError(error => {
-          this.authState.update(state => ({
-            ...state,
-            isLoading: false,
-            error: error.error?.message || 'Registration failed'
-          }));
+          this.error = error.error?.message || 'Registration failed';
+          this.isLoading = false;
           return throwError(() => error);
         })
       );
   }
 
   logout(): void {
-    this.clearStoredAuth();
-    this.authState.set({
-      isAuthenticated: false,
-      user: null,
-      accessToken: null,
-      refreshToken: null,
-      isLoading: false,
-      error: null
-    });
-    this.router.navigate(['/login']);
+    this.clearStoredToken();
+    this.isAuthenticated = false;
+    this.user = null;
+    this.error = null;
   }
 
   refreshToken(): Observable<AuthResponse> {
-    const refreshToken = this.authState().refreshToken;
-    if (!refreshToken) {
-      return throwError(() => new Error('No refresh token available'));
-    }
-
-    return this.http.post<AuthResponse>(`${API_BASE_URL}${API_ENDPOINTS.AUTH.REFRESH}`, { refreshToken })
-      .pipe(
-        tap(response => {
-          const newState: AuthState = {
-            ...this.authState(),
-            accessToken: response.accessToken,
-            refreshToken: response.refreshToken
-          };
-          this.authState.set(newState);
-          this.storeAuth(newState);
-        }),
-        catchError(error => {
-          this.logout();
-          return throwError(() => error);
-        })
-      );
+    // For now, we'll implement a simple refresh
+    // In a real app, you'd store and use the refresh token
+    return throwError(() => new Error('Refresh token not implemented'));
   }
 
   getAccessToken(): string | null {
-    return this.authState().accessToken;
+    return this.getStoredToken();
   }
 
-  isTokenExpired(): boolean {
-    const token = this.getAccessToken();
-    if (!token) return true;
+  isTokenExpired(token?: string): boolean {
+    const tokenToCheck = token || this.getAccessToken();
+    if (!tokenToCheck) return true;
 
     try {
-      const payload = JSON.parse(atob(token.split('.')[1]));
+      const payload = JSON.parse(atob(tokenToCheck.split('.')[1]));
       const currentTime = Date.now() / 1000;
       return payload.exp < currentTime;
     } catch {
       return true;
     }
+  }
+
+  // Debug method to check auth state
+  debugAuthState(): void {
+    console.log('🔍 Auth State Debug:', {
+      isAuthenticated: this.isAuthenticated,
+      user: this.user,
+      hasToken: !!this.getAccessToken(),
+      tokenExpired: this.isTokenExpired(),
+      storedToken: this.getStoredToken()
+    });
   }
 }

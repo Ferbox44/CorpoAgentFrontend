@@ -1,0 +1,238 @@
+<div class="chat-container">
+  <!-- Chat Header -->
+  <div class="chat-header">
+    <div class="session-info">
+      <h3 class="session-title">{{ sessionTitle() }}</h3>
+      <span class="message-count">{{ messages().length }} messages</span>
+    </div>
+    <div class="chat-actions">
+      <p-button 
+        icon="pi pi-trash" 
+        severity="secondary"
+        size="small"
+        pTooltip="Clear Chat"
+        (onClick)="clearSession()"
+      />
+    </div>
+  </div>
+
+  <!-- Messages Area -->
+  <div class="messages-container">
+    <div 
+      class="messages-scroll"
+      #messagesContainer
+    >
+      <div class="messages-list">
+        @if (isLoading()) {
+          <div class="loading-container">
+            <p-progressSpinner [style]="{ width: '24px', height: '24px' }" />
+            <span>Loading messages...</span>
+          </div>
+        } @else if (!hasMessages()) {
+          <div class="empty-state">
+            <i class="pi pi-comments"></i>
+            <h4>Start a conversation</h4>
+            <p>Ask me anything about your data, reports, or business insights.</p>
+          </div>
+        } @else {
+          @for (message of messages(); track message.id) {
+            <div class="message-wrapper" [class.user-message]="message.role === 'user'">
+              <div class="message-bubble">
+                @if (message.role === 'user') {
+                  <div class="message-content">
+                    {{ message.content }}
+                  </div>
+                } @else {
+                  <!-- AI Response with structured data -->
+                  @if (isComplexAIResponse(message.content)) {
+                    <div class="ai-response">
+                      <!-- Summary Section -->
+                      <div class="ai-summary">
+                        <h4><i class="pi pi-info-circle"></i> Summary</h4>
+                        <p>{{ getAISummary(message.content) }}</p>
+                      </div>
+
+                      <!-- Insights Section -->
+                      @if (getAIInsights(message.content).length > 0) {
+                        <div class="ai-insights">
+                          <h4><i class="pi pi-lightbulb"></i> Key Insights</h4>
+                          <ul>
+                            @for (insight of getAIInsights(message.content); track insight) {
+                              <li>{{ insight }}</li>
+                            }
+                          </ul>
+                        </div>
+                      }
+
+                      <!-- Recommendations Section -->
+                      @if (getAIRecommendations(message.content).length > 0) {
+                        <div class="ai-recommendations">
+                          <h4><i class="pi pi-check-circle"></i> Recommendations</h4>
+                          <ul>
+                            @for (recommendation of getAIRecommendations(message.content); track recommendation) {
+                              <li>{{ recommendation }}</li>
+                            }
+                          </ul>
+                        </div>
+                      }
+
+                      <!-- Processed Data Content -->
+                      @if (hasProcessedDataContent(message.content)) {
+                        <div class="ai-processed-data">
+                          <h4><i class="pi pi-database"></i> Processed Data</h4>
+                          <p>Data from: <strong>{{ getProcessedDataFilename(message.content) }}</strong></p>
+                          <div class="data-content">
+                            <pre>{{ getProcessedDataContent(message.content) }}</pre>
+                          </div>
+                        </div>
+                      }
+
+                      <!-- HTML Document Actions -->
+                      @if (hasHTMLContent(message.content)) {
+                        <div class="ai-document-actions">
+                          <h4><i class="pi pi-file-pdf"></i> Generated Report</h4>
+                          <p>A comprehensive report has been generated and is ready for viewing.</p>
+                          <div class="document-buttons">
+                            <p-button 
+                              label="View Report" 
+                              icon="pi pi-eye" 
+                              severity="info"
+                              size="small"
+                              (onClick)="openHTMLDocument(getHTMLContent(message.content))"
+                            />
+                            <p-button 
+                              label="Download HTML" 
+                              icon="pi pi-download" 
+                              severity="secondary"
+                              size="small"
+                              (onClick)="downloadHTML(getHTMLContent(message.content), 'report.html')"
+                            />
+                          </div>
+                        </div>
+                      }
+                    </div>
+                  } @else {
+                    <!-- Simple text response -->
+                    <div class="message-content">
+                      {{ message.content }}
+                    </div>
+                  }
+                }
+                
+                <div class="message-meta">
+                  <span class="message-time">
+                    {{ message.timestamp | date:'short' }}
+                  </span>
+                  @if (message.role === 'user') {
+                    <div class="message-actions">
+                      <p-button 
+                        icon="pi pi-copy" 
+                        size="small"
+                        severity="secondary"
+                        pTooltip="Copy"
+                        (onClick)="copyMessage(message)"
+                      />
+                      <p-button 
+                        icon="pi pi-trash" 
+                        size="small"
+                        severity="danger"
+                        pTooltip="Delete"
+                        (onClick)="deleteMessage(message.id)"
+                      />
+                    </div>
+                  }
+                </div>
+              </div>
+            </div>
+          }
+        }
+
+        <!-- Typing Indicator -->
+        @if (isTyping()) {
+          <div class="typing-indicator">
+            <div class="typing-dots">
+              <span></span>
+              <span></span>
+              <span></span>
+            </div>
+            <span>AI is typing...</span>
+          </div>
+        }
+      </div>
+    </div>
+  </div>
+
+  <!-- Error Message -->
+  @if (error()) {
+    <div class="error-banner">
+      <i class="pi pi-exclamation-circle"></i>
+      <span>{{ error() }}</span>
+    </div>
+  }
+
+  <!-- Message Input -->
+  <div class="message-input-container">
+    <form [formGroup]="messageForm" (ngSubmit)="sendMessage()" class="message-form">
+      <div class="input-group">
+        <p-fileUpload 
+          mode="basic"
+          accept=".pdf,.doc,.docx,.txt,.csv"
+          maxFileSize="10000000"
+          chooseLabel=""
+          chooseIcon="pi pi-paperclip"
+          styleClass="file-upload"
+          (onSelect)="onFileUpload($event)"
+        />
+        @if (selectedFile) {
+          <p-button 
+            icon="pi pi-eye" 
+            severity="info"
+            size="small"
+            
+            (onClick)="showCsvPreview()"
+            class="preview-button"
+          />
+        }
+        <input
+          type="text"
+          pInputText
+          formControlName="message"
+          placeholder="Type your message..."
+          class="message-input"
+          (keydown.enter)="sendMessage()"
+        />
+        <p-button 
+          type="submit"
+          icon="pi pi-send"
+          severity="primary"
+          [disabled]="messageForm.invalid || isTyping()"
+          class="send-button"
+        />
+      </div>
+    </form>
+  </div>
+
+  <!-- CSV Preview Dialog -->
+  <p-dialog 
+    [(visible)]="showCsvDialog" 
+    [style]="{width: '80vw', height: '70vh', backgroundColor: 'white', borderRadius: '10px', border: '1px solid #e0e0e0', padding: '10px'}"
+    [closable]="true"
+    (onHide)="closeCsvDialog()"
+    closeIcon="null"
+  >
+    <div class="csv-preview-container">
+      <div class="csv-header">
+        <h4>CSV File Content:</h4>
+        <p-button 
+          icon="pi pi-times" 
+          severity="danger"
+          size="large"
+          (onClick)="closeCsvDialog()"
+        />
+      </div>
+      <div class="csv-content">
+        <pre>{{ csvContent }}</pre>
+      </div>
+    </div>
+  </p-dialog>
+</div>

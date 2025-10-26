@@ -202,6 +202,17 @@
   transform: translateY(-2px);
 }
 
+/* Chat Section */
+.chat-section {
+  margin-bottom: 3rem;
+}
+
+.chat-section app-chat-container {
+  display: block;
+  height: 600px;
+  max-height: 600px;
+}
+
 /* Dashboard Grid */
 .dashboard-grid {
   display: grid;
@@ -269,6 +280,7 @@
   padding: 0.875rem 1rem !important;
   border-radius: 10px !important;
   transition: all 0.3s ease !important;
+  background-color: #75b6d1 !important;
 }
 
 .quick-action:hover {
@@ -324,6 +336,34 @@
   color: #718096;
   font-size: 0.85rem;
   margin: 0;
+}
+
+/* CSV Preview Section */
+.csv-preview-section {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  align-items: center;
+  text-align: center;
+}
+
+.csv-description {
+  color: #718096;
+  font-size: 0.95rem;
+  line-height: 1.6;
+  margin: 0;
+}
+
+.csv-preview-button {
+  width: 100%;
+  padding: 1rem !important;
+  border-radius: 10px !important;
+  transition: all 0.3s ease !important;
+}
+
+.csv-preview-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(102, 208, 234, 0.3) !important;
 }
 
 /* Status List */
