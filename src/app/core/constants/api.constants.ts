@@ -18,6 +18,10 @@ export const API_ENDPOINTS = {
     ORCHESTRATOR: '/agents/orchestrator',
     REPORT: '/agents/report',
     UNI: '/agents/uni'
+  },
+  KNOWLEDGE_BASE: {
+    LIST: '/knowledge-base',
+    DELETE: (id: string) => `/knowledge-base/${id}`
   }
 } as const;
 

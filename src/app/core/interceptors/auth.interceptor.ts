@@ -23,25 +23,8 @@ export function authInterceptor(req: HttpRequest<unknown>, next: HttpHandlerFn):
   return next(req).pipe(
     catchError((error: HttpErrorResponse) => {
       if (error.status === 401 && !req.url.includes('/auth/refresh')) {
-        // Token expired, try to refresh
-        return authService.refreshToken().pipe(
-          switchMap(() => {
-            const newToken = authService.getAccessToken();
-            if (newToken) {
-              const newReq = req.clone({
-                setHeaders: {
-                  Authorization: `Bearer ${newToken}`
-                }
-              });
-              return next(newReq);
-            }
-            return throwError(() => error);
-          }),
-          catchError(() => {
-            authService.logout();
-            return throwError(() => error);
-          })
-        );
+        // Do not force-logout; simply propagate the error and let callers decide
+        return throwError(() => error);
       }
       return throwError(() => error);
     })

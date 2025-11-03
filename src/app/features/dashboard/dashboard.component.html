@@ -49,6 +49,9 @@
               Your intelligent corporate assistant is ready to help you with data analysis, 
               reporting, and business insights.
             </p>
+            <p class="welcome-subtitle">
+              If something goes wrong, please feel free to refresh the page.
+            </p>
             
           </div>
         </div>
@@ -84,6 +87,13 @@
                 class="quick-action"
                 (onClick)="generateReport()"
               />
+              <p-button 
+                label="Generate Charts: Create visualizations from data (view/export HTML)" 
+                icon="pi pi-chart-line" 
+                severity="success"
+                class="quick-action"
+                (onClick)="generateCharts()"
+              />
               
             </div>
           </div>
@@ -115,6 +125,46 @@
             </div>
           </div>
         </div>
+
+      <!-- Knowledge Base Files -->
+      <div class="dashboard-card">
+        <div class="card-header">
+          <i class="pi pi-folder"></i>
+          <h3>Knowledge Base Files</h3>
+        </div>
+        <div class="card-content">
+          <div *ngIf="kbLoading(); else kbList">Loading files...</div>
+          <ng-template #kbList>
+            <div *ngIf="kbItems().length === 0; else kbItemsList">No files found.</div>
+            <ng-template #kbItemsList>
+              <div class="kb-list">
+                <div class="kb-list-header" style="display: grid; grid-template-columns: 2fr 1.5fr 1fr 1fr; gap: 12px; font-weight: 600;">
+                  <div>Title</div>
+                  <div>Filename</div>
+                  <div>Type</div>
+                  <div>Created</div>
+                </div>
+                <div class="kb-list-body">
+                  <div *ngFor="let item of kbItems()" style="display: grid; grid-template-columns: 2fr 1.5fr 1fr 1fr; gap: 12px; align-items: center; padding: 8px 0; border-bottom: 1px solid #eee;">
+                    <div>
+                      <div style="font-weight: 600;">{{ item.title || item.filename }}</div>
+                      <div style="font-size: 12px; color: #666; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 480px;">
+                        {{ item.analysis_summary || (item.content | slice:0:120) }}
+                      </div>
+                    </div>
+                    <div>{{ item.filename || '-' }}</div>
+                    <div>{{ item.file_type || '-' }}</div>
+                    <div>
+                      <span>{{ item.createdAt | date:'short' }}</span>
+                      <p-button icon="pi pi-trash" severity="danger" styleClass="p-button-text" (onClick)="deleteKnowledgeBaseItem(item.id)" />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </ng-template>
+          </ng-template>
+        </div>
+      </div>
 
         <!-- System Status -->
         <div class="dashboard-card">

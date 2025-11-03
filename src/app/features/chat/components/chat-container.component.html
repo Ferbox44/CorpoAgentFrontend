@@ -110,6 +110,45 @@
                           </div>
                         </div>
                       }
+
+                      <!-- Charts: Inline SVG Preview (generate_charts) -->
+                      @if (hasChartsInlineSVG(message.content)) {
+                        <div class="ai-charts-inline">
+                          <h4><i class="pi pi-chart-bar"></i> Generated Charts (Inline)</h4>
+                          <div class="charts-inline-content" [innerHTML]="getChartsInlineSVG(message.content)"></div>
+                        </div>
+                      }
+
+                      <!-- Charts: Exported HTML via iframe srcdoc (export_charts) -->
+                      @if (hasChartsExportHTML(message.content)) {
+                        <div class="ai-charts-export">
+                          <h4><i class="pi pi-chart-line"></i> Generated Charts</h4>
+                          <div class="charts-actions document-buttons">
+                            <p-button 
+                              label="Open in New Tab" 
+                              icon="pi pi-external-link" 
+                              severity="info"
+                              size="small"
+                              (onClick)="openChartsHTML(message.content)"
+                            />
+                            <p-button 
+                              label="Download HTML" 
+                              icon="pi pi-download" 
+                              severity="secondary"
+                              size="small"
+                              (onClick)="downloadChartsHTML(message.content, 'charts.html')"
+                            />
+                          </div>
+                          <div class="charts-iframe-wrapper">
+                            <iframe 
+                              class="charts-iframe"
+                              [attr.srcdoc]="getChartsExportSrcdoc(message.content)"
+                              title="Generated Charts"
+                              loading="lazy"
+                            ></iframe>
+                          </div>
+                        </div>
+                      }
                     </div>
                   } @else {
                     <!-- Simple text response -->

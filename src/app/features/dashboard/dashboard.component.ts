@@ -4,6 +4,7 @@ import { ButtonModule } from 'primeng/button';
 import { CardModule } from 'primeng/card';
 import { AvatarModule } from 'primeng/avatar';
 import { AuthService } from '../../core/services/auth.service';
+import { KnowledgeBaseService, KnowledgeBaseItem } from '../../core/services/knowledge-base.service';
 import { ChatContainerComponent } from '../chat/components/chat-container.component';
 import { Router } from '@angular/router';
 
@@ -18,7 +19,14 @@ export class DashboardComponent implements OnInit {
   userInitials = signal('');
   @ViewChild(ChatContainerComponent) chatContainer!: ChatContainerComponent;
 
-  constructor(public authService: AuthService, private router: Router) {}
+  kbItems = signal<KnowledgeBaseItem[]>([]);
+  kbLoading = signal(false);
+
+  constructor(
+    public authService: AuthService,
+    private router: Router,
+    private knowledgeBaseService: KnowledgeBaseService
+  ) {}
 
   ngOnInit() {
     const user = this.authService.user;
@@ -31,6 +39,8 @@ export class DashboardComponent implements OnInit {
         `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase()
       );
     }
+
+    this.loadKnowledgeBase();
   }
 
   logout(): void {
@@ -90,6 +100,28 @@ export class DashboardComponent implements OnInit {
     console.log('Opening orchestration...');
   }
 
+  generateCharts(): void {
+    const chartsMessage = "Generate insightful charts from the employees.csv file.";
+
+    if (this.chatContainer) {
+      // Prefer using the employees dataset for charting examples
+      //this.chatContainer.loadEmployeesCSV();
+
+      setTimeout(() => {
+        const file = this.chatContainer.selectedFile;
+        if (file) {
+          this.chatContainer.sendMessageProgrammatically(chartsMessage, file);
+          console.log('Charts generation message sent with employees.csv file');
+        } else {
+          this.chatContainer.sendMessageProgrammatically(chartsMessage);
+          console.log('Charts generation message sent (no file)');
+        }
+      }, 200);
+    } else {
+      console.warn('Chat container not available');
+    }
+  }
+
   showCsvPreview(): void {
     if (this.chatContainer) {
       // Load the employees.csv file
@@ -112,5 +144,26 @@ export class DashboardComponent implements OnInit {
         this.chatContainer.showCsvPreview();
       }, 200);
     }
+  }
+
+  private loadKnowledgeBase(): void {
+    this.kbLoading.set(true);
+    this.knowledgeBaseService.list().subscribe({
+      next: (items) => {
+        this.kbItems.set(items);
+        this.kbLoading.set(false);
+      },
+      error: () => this.kbLoading.set(false)
+    });
+  }
+
+  deleteKnowledgeBaseItem(id: string): void {
+    const confirmed = confirm('Delete this file from the knowledge base?');
+    if (!confirmed) return;
+    this.knowledgeBaseService.delete(id).subscribe({
+      next: () => {
+        this.kbItems.set(this.kbItems().filter(item => item.id !== id));
+      }
+    });
   }
 }

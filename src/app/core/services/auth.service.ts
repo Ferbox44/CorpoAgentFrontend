@@ -55,7 +55,14 @@ export class AuthService {
       },
       error: (error) => {
         console.error('Failed to load user profile:', error);
-        this.logout();
+        if (error?.status === 401) {
+          this.logout();
+        } else {
+          // Keep session if token is present and not expired
+          if (this.getStoredToken() && !this.isTokenExpired()) {
+            this.isAuthenticated = true;
+          }
+        }
       }
     });
   }
@@ -68,7 +75,7 @@ export class AuthService {
         tap(response => {
           // Backend returns 'access_token'
           this.storeToken(response.access_token);
-          console.log('Storing token:', response.access_token);
+          //console.log('Storing token:', response.access_token);
           
           this.isAuthenticated = true;
           this.user = response.user;

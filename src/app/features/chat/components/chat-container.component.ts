@@ -1,4 +1,5 @@
 import { Component, OnInit, AfterViewChecked, ViewChild, ElementRef, signal, computed } from '@angular/core';
+import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { ButtonModule } from 'primeng/button';
@@ -57,7 +58,8 @@ export class ChatContainerComponent implements OnInit, AfterViewChecked {
   constructor(
     private fb: FormBuilder,
     private chatService: ChatService,
-    public authService: AuthService
+    public authService: AuthService,
+    private sanitizer: DomSanitizer
   ) {
     // Initialize signals after constructor
     this.currentSession = this.chatService.currentSession;
@@ -238,6 +240,86 @@ export class ChatContainerComponent implements OnInit, AfterViewChecked {
       return exportPdfTask?.result || '';
     }
     return '';
+  }
+
+  // Charts - Exported HTML (Chart.js via iframe srcdoc)
+  hasChartsExportHTML(messageContent: any): boolean {
+    const parsed = this.parseAIResponse(messageContent);
+    if (parsed?.plan?.tasks) {
+      const exportChartsTask = parsed.plan.tasks.find((task: any) =>
+        task.agent === 'report' &&
+        task.action === 'export_charts' &&
+        task.status === 'completed' &&
+        typeof task.result === 'string' &&
+        task.result.includes('<!DOCTYPE html>')
+      );
+      return Boolean(exportChartsTask);
+    }
+    return false;
+  }
+
+  getChartsExportHTML(messageContent: any): string {
+    const parsed = this.parseAIResponse(messageContent);
+    if (parsed?.plan?.tasks) {
+      const exportChartsTask = parsed.plan.tasks.find((task: any) =>
+        task.agent === 'report' &&
+        task.action === 'export_charts' &&
+        task.status === 'completed' &&
+        typeof task.result === 'string'
+      );
+      return exportChartsTask?.result || '';
+    }
+    return '';
+  }
+
+  getChartsExportSrcdoc(messageContent: any): SafeHtml | '' {
+    const html = this.getChartsExportHTML(messageContent);
+    return html ? this.sanitizer.bypassSecurityTrustHtml(html) : '';
+  }
+
+  // Charts - Inline SVG (generate_charts)
+  hasChartsInlineSVG(messageContent: any): boolean {
+    const parsed = this.parseAIResponse(messageContent);
+    if (parsed?.plan?.tasks) {
+      const generateChartsTask = parsed.plan.tasks.find((task: any) =>
+        task.agent === 'report' &&
+        task.action === 'generate_charts' &&
+        task.status === 'completed' &&
+        typeof task.result === 'string' &&
+        (task.result.includes('<svg') || task.result.includes('class="chart"'))
+      );
+      return Boolean(generateChartsTask);
+    }
+    return false;
+  }
+
+  getChartsInlineSVG(messageContent: any): SafeHtml | '' {
+    const parsed = this.parseAIResponse(messageContent);
+    if (parsed?.plan?.tasks) {
+      const generateChartsTask = parsed.plan.tasks.find((task: any) =>
+        task.agent === 'report' &&
+        task.action === 'generate_charts' &&
+        task.status === 'completed' &&
+        typeof task.result === 'string'
+      );
+      const svgHtml = generateChartsTask?.result || '';
+      return svgHtml ? this.sanitizer.bypassSecurityTrustHtml(svgHtml) : '';
+    }
+    return '';
+  }
+
+  openChartsHTML(messageContent: any): void {
+    const htmlContent = this.getChartsExportHTML(messageContent);
+    if (htmlContent) {
+      this.openHTMLDocument(htmlContent);
+    }
+  }
+
+  downloadChartsHTML(messageContent: any, filename: string = 'charts.html'): void {
+    const htmlContent = this.getChartsExportHTML(messageContent);
+    if (htmlContent) {
+      this.downloadHTML(htmlContent, filename);
+    }
   }
 
   openHTMLDocument(htmlContent: string): void {
