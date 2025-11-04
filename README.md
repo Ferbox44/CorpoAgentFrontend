@@ -2,9 +2,9 @@
 
 Frontend application for CorpoAgent, a corporate AI assistant platform built with Angular. Provides an intuitive web interface for interacting with the AI agent, managing chat sessions, processing files, and accessing the knowledge base.
 
-Note: This project is intended to work with it's frontend project:
+Note: This project is intended to work with it's backend project:
 ```bash
-https://github.com/Ferbox44/CorpoAgentFrontend
+https://github.com/Ferbox44/CorpoAgentBackend
 ```
 
 ## 🚀 Features
